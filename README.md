@@ -8,7 +8,7 @@
 
 登录成功会收到logedin事件
 
-### match()
+### startmatch()
 
 进入排队
 
