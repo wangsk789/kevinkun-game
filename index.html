@@ -59,6 +59,12 @@
 			setWebViewString(data);
 		});
 		
+		socket.on("goterror", function(data){
+			data.eventname="goterror";
+			console.log(JSON.stringify(data));
+			setWebViewString(data);
+		});
+		
 
 	function setWebViewString(d){
 		if(window.AppInventor){

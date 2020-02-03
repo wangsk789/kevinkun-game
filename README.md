@@ -18,7 +18,7 @@
 
 退出排队
 
-### sendevent(eventname, eventcontent)
+### sendmessage(name, content)
 
 发送游戏事件及内容
 

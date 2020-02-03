@@ -11,16 +11,43 @@ app.get('/', function(req, res){
 var matchlist = [];
 var maxUserNum = 2;
 var roomindex = 0;
+var usersOnline = [];
 
 io.on('connection', function (socket) {
+	
+	var cancelmatch = function(){
+			var index = matchlist.indexOf(socket);
+			if(index !== -1){
+				matchlist.splice(index,1);
+				console.log(socket.username + "退出排队",);
+			}
+			
+		}
 
+	var quitgame = function(){
+		if(socket.roomname){
+				socket.leave(socket.roomname);
+				io.sockets.in(socket.roomname).emit('otherLeft', {"leftuser":socket.username}); 
+				socket.roomname="";
+			}
+	}
 
 	socket.on("login",function (username){
-
-			socket.username=username;
-			var data ={};
-			socket.emit("logedin",data);
-			console.log(socket.username +"登录服务器");
+		if(!socket.username){
+			var index = usersOnline.indexOf(username);
+			if(index == -1){
+				socket.username=username;
+				usersOnline.push(username);
+				var data ={};
+				socket.emit("logedin",data);
+				console.log(socket.username +"登录服务器");
+			}else {
+				var data ={};
+				data.code =1;
+				data.desc = "duplicate username";
+				socket.emit("goterror",data);
+			}
+		}
 
 	});
 	socket.on("startmatch",function(){
@@ -47,14 +74,7 @@ io.on('connection', function (socket) {
 		
 	});
 	
-	socket.on("cancelmatch",function(){
-		var index = matchlist.indexOf(socket);
-		if(index !== -1){
-			matchlist.splice(index,1);
-			console.log(socket.username + "退出排队",);
-		}
-		
-	});
+	
 	
 
 	
@@ -71,22 +91,17 @@ io.on('connection', function (socket) {
 
 	});
   
+	socket.on("cancelmatch",cancelmatch);
+	socket.on('quitgame', quitgame);
   
-	socket.on('quitgame', function () {
-		if(socket.roomname){
-			socket.leave(socket.roomname);
-			io.sockets.in(socket.roomname).emit('otherLeft', {"leftuser":socket.username}); 
-			socket.roomname="";
-		}
-	});
-  
-
-
 	socket.on('disconnect', function () {
-		if(socket.roomname){
-			socket.leave(socket.roomname);
-			io.sockets.in(socket.roomname).emit('otherLeft', {"leftuser":socket.username}); 
-			socket.roomname="";
+		cancelmatch();
+		quitgame();
+		if(socket.username){
+			var index = usersOnline.indexOf(socket.username);
+			usersOnline.splice(index,1);
+			socket.username=null;
+
 		}
 
    
@@ -96,10 +111,13 @@ io.on('connection', function (socket) {
 		maxUserNum = maxuser;   
 	});
 
-
+	
 
 
 });
+
+
+
 http.listen(port, function(){
   console.log('listening on *:' + port);
 });
