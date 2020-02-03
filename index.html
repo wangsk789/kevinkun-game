@@ -26,7 +26,7 @@
 			isLogin=false;
 			isMatched=false;
 			var data ={};
-			data.eventname="disconnect";
+			data.eventname="disconnected";
 			data.reason = reason;
 			console.log(JSON.stringify(data));
 			setWebViewString(data);
@@ -47,8 +47,8 @@
 			setWebViewString(data);
 		});
 		
-		socket.on("gotEvent", function(data){
-			data.eventname="gotEvent";
+		socket.on("gotmessage", function(data){
+			data.eventname="gotmessage";
 			console.log(JSON.stringify(data));
 			setWebViewString(data);
 		});
@@ -73,7 +73,7 @@
 	
 	function startmatch(){
 		if(isLogin){
-			socket.emit("match");
+			socket.emit("startmatch");
 		}
 		
 	}
@@ -85,15 +85,15 @@
 		
 	}
 	  	  
-	function sendevent(eventname, eventcontent){
+	function sendmessage(name, content){
 		if(isMatched){
-			socket.emit("newEvent", eventname, eventcontent);
+			socket.emit("sendmessage", name, content);
 		}
 	  }
 	  
 	function quitgame(){
 		if(isMatched){
-			socket.emit("quitGame");
+			socket.emit("quitgame");
 			isMatched =false;
 		}
 	}

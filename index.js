@@ -23,7 +23,7 @@ io.on('connection', function (socket) {
 			console.log(socket.username +"登录服务器");
 
 	});
-	socket.on("match",function(){
+	socket.on("startmatch",function(){
 		var index = matchlist.indexOf(socket);
 		if(index == -1){
 			matchlist.push(socket);
@@ -58,13 +58,13 @@ io.on('connection', function (socket) {
 	
 
 	
-	socket.on('newEvent', function (eventName, eventContent) {
+	socket.on('sendmessage', function (eventName, eventContent) {
 		if(socket.roomname){
 			var data ={};
 			data.from = socket.username;
 			data.name = eventName;
 			data.content = eventContent;
-			io.sockets.in(socket.roomname).emit('gotEvent', data); 
+			io.sockets.in(socket.roomname).emit('gotmessage', data); 
 			console.log(socket.username +"在房间"+socket.roomname +"中发送事件："+ eventName + "，事件内容：" +eventContent);
 		}
 			
@@ -72,7 +72,7 @@ io.on('connection', function (socket) {
 	});
   
   
-	socket.on('quitGame', function () {
+	socket.on('quitgame', function () {
 		if(socket.roomname){
 			socket.leave(socket.roomname);
 			io.sockets.in(socket.roomname).emit('otherLeft', {"leftuser":socket.username}); 
