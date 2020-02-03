@@ -91,6 +91,10 @@ io.on('connection', function (socket) {
 
    
 	});
+	
+	socket.on('setmaxuser', function (maxuser) {
+		maxUserNum = maxuser;   
+	});
 
 
 
