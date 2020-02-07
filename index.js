@@ -12,6 +12,7 @@ var matchlist = [];
 var maxUserNum = 2;
 var roomindex = 0;
 var usersOnline = [];
+var rooms={};
 
 io.on('connection', function (socket) {
 	
@@ -23,13 +24,25 @@ io.on('connection', function (socket) {
 		}
 	}
 
-	var quitgame = function(){
+	var leaveroom = function(){
 		if(socket.roomname){
+				var index = rooms[socket.roomname].userlist.indexOf(socket.username);
+				rooms[socket.roomname].userlist.splice(index, 1);
 				socket.leave(socket.roomname);
-				io.sockets.in(socket.roomname).emit('otherLeft', {"leftuser":socket.username}); 
-				socket.roomname="";
-			}
+				var data ={};
+				data.username = socket.username;
+				data.userlist = rooms[socket.roomname].userlist;
+				io.sockets.in(socket.roomname).emit('otherleftroom', data); 
+
+				console.log(socket.username +"离开了房间"+socket.roomname+ ",剩余用户："+ data.userlist +",人数："+ data.userlist.length);
+					socket.roomname="";			
+				// if(data.userlist.length<=0){
+					// delete rooms[roomname];
+					// console.log(roomname +"已销毁");
+				// }
+		}
 	}
+
 
 	socket.on("login",function (username){
 		if(!socket.username){
@@ -49,6 +62,45 @@ io.on('connection', function (socket) {
 		}
 	});
 	
+	socket.on("joinroom",function (roomname){
+		if(socket.username){
+			if(!socket.roomname){
+				if (!rooms[roomname]) {
+				  rooms[roomname] ={};
+				  rooms[roomname].userlist = [];
+				}
+				if(rooms[roomname].userlist.length >=maxUserNum){
+					var data ={};
+					data.code =4;
+					data.desc = "room full";
+					socket.emit("goterror",data);
+				}else{
+						rooms[roomname].userlist.push(socket.username);
+						socket.roomname=roomname;
+						socket.join(roomname); 
+						var data ={};
+						data.username = socket.username;
+						data.usernum = rooms[roomname].userlist.length;
+						data.userlist = rooms[roomname].userlist;
+
+						io.sockets.in(roomname).emit('joinedroom', data);  
+						
+						console.log(socket.username +"加入了房间"+ socket.roomname+",房间用户："+ data.userlist+",人数："+ data.userlist.length);
+
+					
+				}
+			}else {
+				var data ={};
+				data.code =5;
+				data.desc = "already in a room";
+				socket.emit("goterror",data);
+			}
+				
+
+		}
+	});
+	
+	
 	socket.on("startmatch",function(){
 		if(socket.username){
 			var index = matchlist.indexOf(socket);
@@ -58,13 +110,17 @@ io.on('connection', function (socket) {
 					roomindex++;
 					var roomname="room" + roomindex;
 					var userlist = [];
-					
+					if (!rooms[roomname]) {
+					  rooms[roomname] ={};
+					  rooms[roomname].userlist = [];
+					}
 					for(var i=0; i < maxUserNum; i++){
 						matchlist[i].join(roomname);
 						matchlist[i].roomname=roomname;
 						userlist.push(matchlist[i].username);
 					}
-					matchlist.splice(0,2);			
+					matchlist.splice(0,2);		
+					rooms[roomname].userlist=userlist;
 					io.sockets.in(roomname).emit('matched', {"userlist":userlist}); 
 					//console.log("新房间：" +roomname);
 				}
@@ -96,11 +152,11 @@ io.on('connection', function (socket) {
 	});
   
 	socket.on("cancelmatch",cancelmatch);
-	socket.on('quitgame', quitgame);
+	socket.on('leaveroom', leaveroom);
   
 	socket.on('disconnect', function () {
 		cancelmatch();
-		quitgame();
+		leaveroom();
 		if(socket.username){
 			var index = usersOnline.indexOf(socket.username);
 			usersOnline.splice(index,1);
