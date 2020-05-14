@@ -8,8 +8,19 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
       
-        var socket=io();
+        var socket;
 		
+		
+		
+
+	function setWebViewString(d){
+		if(window.AppInventor){
+			window.AppInventor.setWebViewString(JSON.stringify(d));
+		}
+	}
+	
+	function connect(nsp){
+		socket= io("/" + nsp);
 		socket.on('connect', function () {
 			var data ={};
 			data.eventname="connected";
@@ -50,6 +61,12 @@
 			setWebViewString(data);
 		});
 		
+		socket.on("leftroom", function(data){
+			data.eventname="leftroom";
+			console.log(JSON.stringify(data));
+			setWebViewString(data);
+		});
+		
 		socket.on("otherleftroom", function(data){
 			data.eventname="otherleftroom";
 			console.log(JSON.stringify(data));
@@ -61,14 +78,7 @@
 			console.log(JSON.stringify(data));
 			setWebViewString(data);
 		});
-		
-
-	function setWebViewString(d){
-		if(window.AppInventor){
-			window.AppInventor.setWebViewString(JSON.stringify(d));
-		}
 	}
-
 
 	function login(username){
 		socket.emit("login", username);
@@ -85,8 +95,8 @@
 		
 	}
 	  	  
-	function sendmessage(name, content){
-		socket.emit("sendmessage", name, content);
+	function sendmessage( title, content){
+		socket.emit("sendmessage",  title, content);
 
 	  }
 	  
